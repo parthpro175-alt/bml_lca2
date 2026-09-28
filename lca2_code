@@ -1,0 +1,115 @@
+# Logistic Regression - Bank Marketing Dataset
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# 1. Load the dataset
+data = pd.read_csv("bank.csv")
+
+# 2. Display basic information
+print("First 5 rows:")
+print(data.head())
+
+print("\nDataset Shape:")
+print(data.shape)
+
+print("\nDataset Information:")
+print(data.info())
+
+# 3. Check missing values
+print("\nMissing Values:")
+print(data.isnull().sum())
+
+# 4. Convert categorical columns into numerical values
+data_encoded = data.copy()
+
+label_encoders = {}
+
+for column in data_encoded.select_dtypes(include="object").columns:
+    le = LabelEncoder()
+    data_encoded[column] = le.fit_transform(data_encoded[column])
+    label_encoders[column] = le
+
+# 5. Separate features and target variable
+X = data_encoded.drop("y", axis=1)
+y = data_encoded["y"]
+
+# 6. Split the dataset into training and testing data
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# 7. Standardize the features
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# 8. Create Logistic Regression model
+model = LogisticRegression(max_iter=1000)
+
+# 9. Train the model
+model.fit(X_train, y_train)
+
+# 10. Make predictions
+y_pred = model.predict(X_test)
+
+# 11. Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+
+print("\nModel Accuracy:")
+print(accuracy)
+
+print("\nAccuracy Percentage:")
+print(accuracy * 100, "%")
+
+# 12. Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+
+print("\nConfusion Matrix:")
+print(cm)
+
+# 13. Classification Report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# 14. Display feature coefficients
+feature_importance = pd.DataFrame({
+    "Feature": X.columns,
+    "Coefficient": model.coef_[0]
+})
+
+feature_importance = feature_importance.sort_values(
+    by="Coefficient",
+    ascending=False
+)
+
+print("\nFeature Coefficients:")
+print(feature_importance)
+
+# 15. Plot confusion matrix
+plt.figure(figsize=(6, 5))
+plt.imshow(cm)
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.colorbar()
+
+plt.xticks([0, 1], ["No", "Yes"])
+plt.yticks([0, 1], ["No", "Yes"])
+
+for i in range(2):
+    for j in range(2):
+        plt.text(j, i, cm[i, j],
+                 ha="center",
+                 va="center")
+
+plt.show()
